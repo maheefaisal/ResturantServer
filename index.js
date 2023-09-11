@@ -34,6 +34,11 @@ async function run() {
     const reviewCollection = client.db("resturantDB").collection("reviews")
     const cartCollection = client.db("resturantDB").collection("carts")
 
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESSS_TOKEN, { expiresIn: "1h" })
+      res.send({ token })
+    })
     //User Related apis
     app.get('/users', async (req, res) => {
       const result = await usersCollection.find().toArray()
