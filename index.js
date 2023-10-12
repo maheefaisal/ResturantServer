@@ -2,7 +2,7 @@ const express = require('express')
 const app = express()
 const cors = require('cors')
 const jwt = require('jsonwebtoken');
-
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY)
 // Requiring Dot Env
 require('dotenv').config()
 
@@ -30,6 +30,7 @@ const verifyJWT = (req, res, next) => {
 }
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { default: Stripe } = require('stripe');
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.3igul5k.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -160,6 +161,21 @@ async function run() {
       const result = await cartCollection.deleteOne(query)
       res.send(result)
 
+    })
+
+
+    //Create Payment
+    app.post('/create-payment-intent',verifyJWT, async (req, res) => {
+      const { body } = req.body
+      const amount = price * 100
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
+      })
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
     })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
