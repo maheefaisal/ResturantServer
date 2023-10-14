@@ -180,12 +180,29 @@ async function run() {
     })
 
     //payment related api
-    app.post('/payments',verifyJWT, async (req, res) => {
+    app.post('/payments', verifyJWT, async (req, res) => {
       const payment = req.body
       const result = await paymentCollection.insertOne(payment)
       res.send(result)
     })
 
+    app.get('/admin-stats', verifyJWT, verifyAdmin, async (res, req) => {
+      const users = await usersCollection.estimatedDocumentCount()
+      const products = await menuCollection.estimatedDocumentCount()
+      const orders = await paymentCollection.estimatedDocumentCount()
+
+      //Using sum and group operator for obtaining sum of a field
+
+      const payments = await paymentsCollection.find().toArray()
+      const revenue = payments.reduce((sum, payment) => sum + payment.price, 0)
+
+      res.send({
+        revenue,
+        users,
+        products,
+        orders
+      })
+    })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
